@@ -1,0 +1,8 @@
+[tool.ruff]
+line-length = 88          # longueur max d'une ligne (défaut Ruff = 88, comme Black)
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # pycodestyle + Pyflakes + tri d'imports
+
+[tool.ruff.format]
+quote-style = "double"    # guillemets doubles (défaut)

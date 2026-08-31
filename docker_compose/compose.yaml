@@ -1,0 +1,30 @@
+services:
+  app:
+    build: ./app
+    environment:
+      DB_HOST: db
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: secret123
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    ports :
+      -   "5432:5432"
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: secret123
+      POSTGRES_DB: demo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d demo"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:

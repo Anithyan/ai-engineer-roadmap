@@ -1,0 +1,12 @@
+repos:
+ - repo: https://github.com/pre-commit/pre-commit-hooks
+   rev: v6.0.0
+   hooks:
+     - id: trailing-whitespace   # enlève les espaces en fin de ligne
+     - id: end-of-file-fixer     # garantit un saut de ligne final
+ - repo: https://github.com/astral-sh/ruff-pre-commit
+   rev: v0.15.21                 # épingle une version (voir étape 4)
+   hooks:
+     - id: ruff-check            # le LINTER — en PREMIER
+       args: [--fix]             # autorise l'auto-correction (fixes safe)
+     - id: ruff-format           # le FORMATTER — APRÈS

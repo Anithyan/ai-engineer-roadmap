@@ -1,0 +1,16 @@
+services:
+   db:
+      image:
+      environnement:
+      volumes:
+         pgdata:data/.../var
+
+
+   adminer:
+      image:
+      ports:localhost:8080
+      depends_on:
+         -db
+
+volumes:
+   -pgdata

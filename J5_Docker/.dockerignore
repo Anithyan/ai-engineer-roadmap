@@ -1,0 +1,19 @@
+# Environnements Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Git
+.git/
+.gitignore
+
+# Secrets — JAMAIS dans une image
+.env
+
+# Fichiers Docker eux-memes (inutiles dans l'image)
+Dockerfile
+.dockerignore
+
+# Docs
+*.md

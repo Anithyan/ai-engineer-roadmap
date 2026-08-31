@@ -1,0 +1,6 @@
+from pathlib import Path
+
+base = Path("data")
+events_dir = base / "events"
+fichier = "data/events/fichier.json"
+print(fichier)
