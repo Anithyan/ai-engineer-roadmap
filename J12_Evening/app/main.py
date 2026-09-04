@@ -1,41 +1,38 @@
 # app/main.py
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.exc import IntegrityError
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user  # ← ta dépendance J11-PM
+from app.api.routers import auth
+from app.core.limiter import limiter
 from app.core.logging_setup import setup_logging
 from app.database import get_db
+from app.models import User  # ← ajoute User
 from app.schemas import ItemCreate, ItemOut
+from app.services import item_service  # ← ajoute cet import en haut
+from app.services.item_service import DuplicateTitleError
 
 setup_logging()
 
 app = FastAPI()
 
-from app.api.routers import auth
-
 app.include_router(auth.router)
 
-from app.api.deps import get_current_user  # ← ta dépendance J11-PM
-from app.models import Item, User  # ← ajoute User
-from app.services import item_service  # ← ajoute cet import en haut
+# app/main.py
 
 
-# POST /items — le serveur décide du propriétaire (jamais le client)
 @app.post("/items", response_model=ItemOut, status_code=201)
 def create_item(
     payload: ItemCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):  # ← exige un token
-    item = Item(**payload.model_dump(), owner_id=current_user.id)  # ← owner = toi
-    db.add(item)
+):
     try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
+        return item_service.create_item_for_owner(db, payload, current_user.id)
+    except DuplicateTitleError:  # métier → 409
         raise HTTPException(status_code=409, detail="title already exists")
-    db.refresh(item)  # recharge pour récupérer l'id généré par Postgres
-    return item  # SQLAlchemy → Pydantic (via response_model)
 
 
 @app.get("/items", response_model=list[ItemOut])
@@ -44,9 +41,15 @@ def list_items(db: Session = Depends(get_db)):
 
 
 @app.get("/items/{item_id}", response_model=ItemOut)
-def get_item(item_id: int, db: Session = Depends(get_db)):
-    item = item_service.get_item(db, item_id)
-    if item is None:  # 🟥 la route décide : None → 404
+def get_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):  # ← REMET l'auth
+    item = item_service.get_item_for_owner(
+        db, item_id, current_user.id
+    )  # ← REMET l'ownership
+    if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
 
@@ -57,18 +60,9 @@ def delete_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    item = db.get(Item, item_id)
-    if item is None or item.owner_id != current_user.id:
+    if not item_service.delete_item_for_owner(db, item_id, current_user.id):
         raise HTTPException(status_code=404, detail="Item not found")
-    db.delete(item)
-    db.commit()
 
-
-# app/main.py  (à ajouter)
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-
-from app.core.limiter import limiter
 
 app.state.limiter = limiter
 app.add_exception_handler(

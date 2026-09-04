@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+
+jobs:
+ quality:
+   runs-on: ubuntu-latest
+
+   defaults:
+     run:
+       working-directory: ./J12_Evening        # ← TON dossier de projet du jour (adapte le nom)
+
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v6
+
+     - name: Set up Python
+       uses: actions/setup-python@v6
+       with:
+         python-version: '3.12'
+         cache: 'pip'
+         cache-dependency-path: J13_PM/requirements.txt   # ← même dossier (monorepo)
+
+     - name: Install dependencies
+       run: |
+         python -m pip install --upgrade pip
+         pip install -r requirements.txt
+
+     - name: Lint with Ruff
+       run: ruff check --output-format=github .
+
+     - name: Check formatting with Ruff
+       run: ruff format --check .
+
+     - name: Type-check with mypy
+       run: mypy app
+
+     - name: Run DB-free tests with coverage
+       env:
+         DATABASE_URL: postgresql+psycopg://user:pass@localhost:5432/test_db
+         SECRET_KEY: dummy-ci-secret-not-real
+       run: pytest tests/test_utils.py --cov=app --cov-report=term-missing

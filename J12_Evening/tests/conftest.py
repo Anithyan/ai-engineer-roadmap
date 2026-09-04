@@ -1,6 +1,9 @@
 # tests/conftest.py
 import pytest
 from app import models  # noqa: F401 → enregistre User ET Item sur Base.metadata
+
+# tests/conftest.py  (à ajouter)
+from app.core.limiter import limiter
 from app.database import Base, get_db
 from app.database import engine as app_engine
 from app.main import (
@@ -80,13 +83,17 @@ def seed_15_items(seed_test_user):  # ← dépend du user existant
     yield
 
 
-# tests/conftest.py  (à ajouter)
-import pytest
-from app.core.limiter import limiter
-
-
 @pytest.fixture(autouse=True)  # s'applique à TOUS les tests automatiquement
 def _disable_rate_limit():
     limiter.enabled = False  # coupe le rate limiting pendant les tests
     yield
     limiter.enabled = True
+
+
+@pytest.fixture
+def db_session():
+    db = TestingSessionLocal()
+    try:
+        yield db  # ← même pattern yield que ton get_db (J10)
+    finally:
+        db.close()
