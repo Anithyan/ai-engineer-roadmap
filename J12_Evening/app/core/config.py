@@ -18,5 +18,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
 
-# UNE seule instance, importée partout ailleurs via "from app.core.config import settings".
+# UNE seule instance, importée partout
+# ailleurs via "from app.core.config import settings".
 settings = Settings()

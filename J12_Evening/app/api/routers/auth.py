@@ -2,6 +2,8 @@
 from datetime import timedelta
 from typing import Annotated
 
+from app.api.deps import get_current_user
+from app.core.limiter import limiter
 from app.core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     create_access_token,
@@ -9,7 +11,7 @@ from app.core.security import (
 )
 from app.database import get_db  # ← ta dépendance de session J10
 from app.models import User  # ← ton model User J10
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -32,10 +34,6 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
     return user
 
 
-from app.core.limiter import limiter
-from fastapi import Request
-
-
 @router.post("/token")  # 1) route AU-DESSUS
 @limiter.limit("5/minute")  # 2) limit EN-DESSOUS
 def login_for_access_token(
@@ -55,10 +53,6 @@ def login_for_access_token(
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     return Token(access_token=access_token, token_type="bearer")
-
-
-# app/api/routers/auth.py  (à ajouter)
-from app.api.deps import get_current_user
 
 
 class UserPublic(BaseModel):
