@@ -4,3 +4,16 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 *.egg-info/
+# On ne suit QUE le projet à jour
+/Docker_demo/
+/J10_PM/
+/J11_AM/
+/J11_PM/
+/J4-AM-typing-pydantic/
+/J4_11/
+/J4_12/
+/J5_Docker/
+/J7-modules-standard/
+/demo/
+/docker_compose/
+/dockerfile_opt/
