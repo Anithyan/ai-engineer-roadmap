@@ -89,3 +89,11 @@ jobs:
 
       - name: Run tests
         run: pytest --cov=app
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -t fastapi-app:ci .

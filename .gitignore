@@ -17,3 +17,4 @@ __pycache__/
 /demo/
 /docker_compose/
 /dockerfile_opt/
+.env

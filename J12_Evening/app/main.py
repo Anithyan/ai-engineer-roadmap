@@ -2,6 +2,8 @@
 from fastapi import Depends, FastAPI, HTTPException
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user  # ← ta dépendance J11-PM
@@ -20,7 +22,17 @@ app = FastAPI()
 
 app.include_router(auth.router)
 
+
 # app/main.py
+@app.get("/health")
+def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(
+            text("SELECT 1")
+        )  # SQLAlchemy 2.0 exige text() pour du SQL brut (← J11)
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="database unavailable")
+    return {"status": "ok"}
 
 
 @app.post("/items", response_model=ItemOut, status_code=201)
