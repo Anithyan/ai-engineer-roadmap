@@ -26,8 +26,8 @@ def get_item_for_owner(db: Session, item_id: int, owner_id: int) -> Item | None:
     return item
 
 
-def list_items(db: Session) -> list[Item]:
-    return list(db.scalars(select(Item)).all())
+def list_items(db: Session, skip: int = 0, limit: int = 100):
+    return db.scalars(select(Item).offset(skip).limit(limit)).all()
 
 
 def create_item_for_owner(db: Session, data: ItemCreate, owner_id: int) -> Item:

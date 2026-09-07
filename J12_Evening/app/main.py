@@ -36,8 +36,12 @@ def create_item(
 
 
 @app.get("/items", response_model=list[ItemOut])
-def list_items(db: Session = Depends(get_db)):
-    return item_service.list_items(db)
+def list_items(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    return item_service.list_items(db, skip=skip, limit=limit)
 
 
 @app.get("/items/{item_id}", response_model=ItemOut)
