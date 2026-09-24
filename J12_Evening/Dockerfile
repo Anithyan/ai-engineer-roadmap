@@ -19,7 +19,7 @@ COPY --from=builder /install /usr/local
 COPY . .
 
 # Le port sur lequel uvicorn écoutera
-EXPOSE 8000
+EXPOSE 8080
 
 # Lance l'app. --host 0.0.0.0 = écoute hors du conteneur (obligatoire en conteneur)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh","-c","exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

@@ -23,16 +23,21 @@ app = FastAPI()
 app.include_router(auth.router)
 
 
-# app/main.py
 @app.get("/health")
-def health(db: Session = Depends(get_db)):
+def health():
+    # LIVENESS : l'app tourne et écoute. Aucune dépendance → répond 200 même sans DB.
+    return {"status": "ok"}
+
+
+@app.get("/ready")
+def readiness(db: Session = Depends(get_db)):
+    # READINESS : la DB doit répondre (utile quand
+    # la vraie base sera branchée, ← J14-Evening).
     try:
-        db.execute(
-            text("SELECT 1")
-        )  # SQLAlchemy 2.0 exige text() pour du SQL brut (← J11)
+        db.execute(text("SELECT 1"))
     except SQLAlchemyError:
         raise HTTPException(status_code=503, detail="database unavailable")
-    return {"status": "ok"}
+    return {"status": "ready"}
 
 
 @app.post("/items", response_model=ItemOut, status_code=201)

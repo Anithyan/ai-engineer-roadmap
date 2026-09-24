@@ -1,0 +1,58 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: ['main']
+
+env:
+  PROJECT_ID: "items-api-470912"
+  REGION: europe-west1
+  AR_REPO: "items-repo"      # ← ton dépôt Artifact Registry (J14-AM)
+  SERVICE: "items-api"           # ← ton service Cloud Run (J14-AM)
+  # Colle ici les 2 valeurs du Bloc 3 :
+  WIF_PROVIDER: projects/654973874192/locations/global/workloadIdentityPools/github/providers/ai-engineer-roadmap
+  DEPLOYER_SA: gh-deployer@items-api-470912.iam.gserviceaccount.com
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'          # ⚠️ OBLIGATOIRE : autorise GitHub à émettre le jeton OIDC
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4          # ⚠️ AVANT auth, sinon l'auth casse [A]
+
+      - name: Authenticate to Google Cloud (keyless)
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build & push image
+        run: |
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}:${{ github.sha }}"
+          docker build -t "$IMAGE" -f J12_Evening/Dockerfile J12_Evening/
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE }}
+
+      - name: Show URL
+        run: echo "Déployé sur ${{ steps.deploy.outputs.url }}"
