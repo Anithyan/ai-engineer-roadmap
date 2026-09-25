@@ -53,6 +53,8 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: ${{ env.IMAGE }}
+          SECRET_KEY=une-valeur-de-test-quelconque
+          DATABASE_URL=postgresql+psycopg://user:pass@host:5432/db
 
       - name: Show URL
         run: echo "Déployé sur ${{ steps.deploy.outputs.url }}"
